@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monthly Billing Dashboard</title>
+    <style>
+        /* --- CSS STYLES --- */
+        :root {
+            --primary-blue: #4facfe;
+            --primary-green: #43e97b;
+            --bg-color: #f4f7f6;
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --text-dark: #2d3436;
+            --text-muted: #636e72;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            background-image: linear-gradient(120deg, #e0c3fc 0%, #8ec5fc 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        /* Card Styling */
+        .card {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        h2 {
+            margin-top: 0;
+            font-size: 1.5rem;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 15px;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #edf2f7;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+        }
+
+        button:active {
+            transform: scale(0.97);
+        }
+
+        .btn-elec {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);
+        }
+
+        .btn-rent {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            box-shadow: 0 4px 15px rgba(67, 233, 123, 0.4);
+        }
+
+        /* History Table */
+        .history-card {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th {
+            background-color: #f8fafc;
+            text-align: left;
+            padding: 15px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #edf2f7;
+            color: var(--text-dark);
+        }
+
+        .badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .badge-elec { background: #e0f2fe; color: #0369a1; }
+        .badge-rent { background: #dcfce7; color: #15803d; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Payment Dashboard</h1>
+        <p>Track your monthly utilities and property expenses</p>
+    </header>
+
+    <div class="dashboard-grid">
+        <section class="card">
+            <h2>⚡ Electricity</h2>
+            <form id="elecForm">
+                <div class="form-group">
+                    <label>Meter Reading (Current)</label>
+                    <input type="number" id="meter" placeholder="0000" required>
+                </div>
+                <div class="form-group">
+                    <label>Units Consumed</label>
+                    <input type="number" id="units" placeholder="Total Units" required>
+                </div>
+                <div class="form-group">
+                    <label>Payment Date</label>
+                    <input type="date" id="elecDate" required>
+                </div>
+                <button type="submit" class="btn-elec">Log Electricity Bill</button>
+            </form>
+        </section>
+
+        <section class="card">
+            <h2>🏠 House Rent</h2>
+            <form id="rentForm">
+                <div class="form-group">
+                    <label>Rent Amount (Rs)</label>
+                    <input type="number" id="amount" placeholder="e.g. 12000" required>
+                </div>
+                <div class="form-group">
+                    <label>Billing Month</label>
+                    <select id="month">
+                        <option>January</option>
+                        <option>February</option>
+                        <option>March</option>
+                        <option>April</option>
+                        <option>May</option>
+                        <option>June</option>
+                        <option>July</option>
+                        <option>August</option>
+                        <option>September</option>
+                        <option>October</option>
+                        <option>November</option>
+                        <option>December</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Payment Date</label>
+                    <input type="date" id="rentDate" required>
+                </div>
+                <button type="submit" class="btn-rent">Confirm Rent Payment</button>
+            </form>
+        </section>
+    </div>
+
+    <section class="card history-card">
+        <h2>📊 Transaction History</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Detail</th>
+                    <th>Date</th>
+                    <th>Amount/Units</th>
+                </tr>
+            </thead>
+            <tbody id="historyBody">
+                </tbody>
+        </table>
+    </section>
+</div>
+
+<script>
+    /* --- JAVASCRIPT LOGIC --- */
+    const historyBody = document.getElementById('historyBody');
+
+    // Handle Electricity Form
+    document.getElementById('elecForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const units = document.getElementById('units').value;
+        const date = document.getElementById('elecDate').value;
+        const meter = document.getElementById('meter').value;
+
+        addRecord('Electricity', `Meter: ${meter}`, date, `${units} Units`, 'badge-elec');
+        this.reset();
+    });
+
+    // Handle Rent Form
+    document.getElementById('rentForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const amount = document.getElementById('amount').value;
+        const date = document.getElementById('rentDate').value;
+        const month = document.getElementById('month').value;
+
+        // Formats the number into Indian Rupee style
+        const formattedAmount = new Intl.NumberFormat('en-IN', {
+            style: 'currency',
+            currency: 'INR',
+        }).format(amount).replace('₹', 'Rs ');
+
+        addRecord('House Rent', month, date, formattedAmount, 'badge-rent');
+        this.reset();
+    });
+
+    function addRecord(type, detail, date, value, badgeClass) {
+        const row = document.createElement('tr');
+        
+        row.innerHTML = `
+            <td><span class="badge ${badgeClass}">${type}</span></td>
+            <td>${detail}</td>
+            <td>${date}</td>
+            <td><strong>${value}</strong></td>
+        `;
+
+        // Animation effect: fade in the new row
+        row.style.opacity = '0';
+        historyBody.prepend(row);
+        
+        setTimeout(() => {
+            row.style.transition = 'opacity 0.5s ease';
+            row.style.opacity = '1';
+        }, 10);
+    }
+</script>
+
+</body>
+</html>
