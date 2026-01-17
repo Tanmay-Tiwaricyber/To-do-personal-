@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Life Tracker iOS 26 Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --bg: #000000;
+            --glass: rgba(28, 28, 30, 0.7);
+            --border: rgba(255, 255, 255, 0.1);
+            --accent-green: #34c759;
+            --accent-blue: #007aff;
+            /* iOS System Font Stack */
+            --font-main: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: white;
+            font-family: var(--font-main);
+            -webkit-font-smoothing: antialiased;
+            letter-spacing: -0.015em; /* Native SF Pro tracking */
+            padding: env(safe-area-inset-top) 20px 120px 20px;
+            overflow-x: hidden;
+        }
+
+        /* SF Pro Typography Weight Classes */
+        h1 { font-weight: 700; letter-spacing: -0.03em; }
+        h2 { font-weight: 600; letter-spacing: -0.02em; }
+        .label-caps { 
+            font-size: 10px; 
+            font-weight: 600; 
+            text-transform: uppercase; 
+            letter-spacing: 0.1em; 
+            opacity: 0.5; 
+        }
+
+        /* Glassmorphism Pro */
+        .glass {
+            background: var(--glass);
+            backdrop-filter: blur(30px) saturate(180%);
+            -webkit-backdrop-filter: blur(30px) saturate(180%);
+            border: 0.5px solid var(--border);
+            border-radius: 30px;
+        }
+
+        /* Micro-interactions */
+        .ios-tap { transition: transform 0.2s cubic-bezier(0.1, 1, 0.2, 1); cursor: pointer; }
+        .ios-tap:active { transform: scale(0.95); }
+
+        .drawer {
+            transform: translateY(105%);
+            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            border-top: 0.5px solid var(--border);
+        }
+        .drawer.open { transform: translateY(0); }
+
+        /* Habit Dots */
+        .dot {
+            width: 52px; height: 52px; border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(255, 255, 255, 0.08);
+            font-size: 22px;
+            transition: all 0.3s ease;
+        }
+        .dot.done { background: var(--accent-green); color: black; box-shadow: 0 8px 20px rgba(52, 199, 89, 0.2); }
+        .dot.mvh { background: #1a4d2e; color: var(--accent-green); border: 2.5px dashed var(--accent-green); }
+        .dot.locked { opacity: 0.2; filter: grayscale(1); }
+
+        .momentum-ring { border: 1px solid var(--accent-green); }
+        .progress-fill { height: 100%; background: white; border-radius: 10px; transition: width 0.8s ease-out; }
+
+        .silent-mode { filter: grayscale(1) brightness(0.85); }
+    </style>
+</head>
+<body id="app-root">
+
+    <header class="max-w-md mx-auto pt-12 mb-12">
+        <div class="flex justify-between items-end mb-6">
+            <div>
+                <p id="current-date" class="label-caps mb-1">Saturday, Jan 17</p>
+                <h1 id="time-countdown" class="text-4xl">--h --m left</h1>
+            </div>
+            <button onclick="toggleSilent()" class="glass px-4 py-2 text-[10px] font-bold uppercase tracking-widest ios-tap">Silent</button>
+        </div>
+        <div class="w-full h-[4px] bg-white/10 rounded-full">
+            <div id="day-progress-bar" class="progress-fill" style="width: 0%"></div>
+        </div>
+    </header>
+
+    <main id="habit-list" class="max-w-md mx-auto space-y-4">
+        </main>
+
+    <button onclick="openAddModal()" class="fixed bottom-10 right-8 w-16 h-16 bg-white text-black rounded-full shadow-2xl flex items-center justify-center text-3xl ios-tap z-40">＋</button>
+
+    <div id="log-drawer" class="fixed inset-x-0 bottom-0 glass drawer p-10 z-50 rounded-t-[40px]">
+        <div class="w-10 h-1 bg-white/20 rounded-full mx-auto mb-8"></div>
+        <div class="text-center mb-10">
+            <h2 id="log-name" class="text-3xl mb-1">Activity</h2>
+            <p id="log-goal" class="text-[11px] font-bold text-blue-500 uppercase tracking-widest">Context: Focus</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mb-10">
+            <button onclick="setEffort('mvh')" id="btn-mvh" class="glass p-6 text-center ios-tap border-2 border-transparent">
+                <span class="text-2xl block mb-2">🌱</span>
+                <p class="label-caps opacity-100">Minimal</p>
+            </button>
+            <button onclick="setEffort('full')" id="btn-full" class="glass p-6 text-center ios-tap border-white/30">
+                <span class="text-2xl block mb-2">⚡️</span>
+                <p class="label-caps opacity-100">Full</p>
+            </button>
+        </div>
+
+        <div class="flex justify-between items-center px-2">
+            <span class="label-caps">Energy Result</span>
+            <div class="flex gap-8">
+                <button onclick="completeLog('-')" class="text-3xl opacity-50 hover:opacity-100 transition">🔋–</button>
+                <button onclick="completeLog('+')" class="text-3xl opacity-50 hover:opacity-100 transition">🔋＋</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="add-modal" class="fixed inset-0 bg-black/80 backdrop-blur-2xl z-[60] hidden flex items-center justify-center p-6">
+        <div class="glass w-full max-w-xs p-8">
+            <h2 class="text-2xl mb-8 text-center">New Habit</h2>
+            <div class="space-y-4 mb-10">
+                <input id="in-name" type="text" placeholder="Habit Name" class="w-full bg-white/5 p-4 rounded-2xl outline-none border border-white/5 focus:border-white/20">
+                <input id="in-goal" type="text" placeholder="Goal (NDA 2026)" class="w-full bg-white/5 p-4 rounded-2xl outline-none border border-white/5 focus:border-white/20 text-sm">
+                <div class="flex gap-4">
+                    <input id="in-start" type="number" placeholder="Start" class="w-1/2 bg-white/5 p-4 rounded-2xl outline-none text-center border border-white/5">
+                    <input id="in-end" type="number" placeholder="End" class="w-1/2 bg-white/5 p-4 rounded-2xl outline-none text-center border border-white/5">
+                </div>
+            </div>
+            <button onclick="saveNewHabit()" class="w-full py-4 bg-white text-black font-bold rounded-2xl ios-tap mb-4">Add Habit</button>
+            <button onclick="closeAddModal()" class="label-caps w-full py-2">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        // Use localStorage for data persistence
+        let habits = JSON.parse(localStorage.getItem('habits-store')) || [];
+        let activeId = null;
+        let selectedEffort = 'full';
+
+        function init() {
+            updateUI();
+            render();
+            setInterval(updateUI, 1000);
+        }
+
+        function updateUI() {
+            const now = new Date();
+            const hrs = now.getHours();
+            const mins = now.getMinutes();
+            const remaining = 1440 - (hrs * 60 + mins);
+            
+            document.getElementById('time-countdown').innerText = `${Math.floor(remaining/60)}h ${remaining%60}m left`;
+            document.getElementById('day-progress-bar').style.width = `${((hrs * 60 + mins) / 1440) * 100}%`;
+            document.getElementById('current-date').innerText = now.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+        }
+
+        function render() {
+            const container = document.getElementById('habit-list');
+            const nowHr = new Date().getHours();
+            
+            if (habits.length === 0) {
+                container.innerHTML = `<div class="text-center py-20 opacity-30 font-medium text-sm">No habits active today. Tap ＋</div>`;
+                return;
+            }
+
+            container.innerHTML = habits.map(h => {
+                const isLocked = nowHr < h.window[0] || nowHr > h.window[1];
+                const isDone = h.lastCompleted === new Date().toDateString();
+                const statusClass = isDone ? (h.lastEffort === 'mvh' ? 'mvh' : 'done') : (isLocked ? 'locked' : '');
+
+                return `
+                    <div class="glass p-6 flex items-center justify-between ${h.streak >= 3 ? 'momentum-ring' : ''} transition-all duration-500">
+                        <div class="flex-1">
+                            <h3 class="text-xl mb-1">${h.name} ${h.streak > 5 ? '💎' : ''}</h3>
+                            <div class="flex items-center gap-4">
+                                <span class="label-caps opacity-70">🔥 ${h.streak} Streak</span>
+                                <span class="label-caps opacity-70">🕒 ${h.window[0]}:00-${h.window[1]}:00</span>
+                            </div>
+                            <div class="mt-4 inline-block px-3 py-1 bg-white/5 rounded-full text-[9px] font-bold text-blue-400 uppercase tracking-widest">🎯 ${h.goal}</div>
+                        </div>
+                        <div onclick="${isLocked && !isDone ? '' : `openLog(${h.id})`}" class="dot ${statusClass} ios-tap">
+                            ${isDone ? '✓' : (isLocked ? '🔒' : '＋')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openLog(id) {
+            activeId = id;
+            const h = habits.find(x => x.id === id);
+            document.getElementById('log-name').innerText = h.name;
+            document.getElementById('log-goal').innerText = `Goal: ${h.goal}`;
+            document.getElementById('log-drawer').classList.add('open');
+            setEffort('full');
+        }
+
+        function setEffort(type) {
+            selectedEffort = type;
+            document.getElementById('btn-mvh').style.borderColor = type === 'mvh' ? 'white' : 'transparent';
+            document.getElementById('btn-full').style.borderColor = type === 'full' ? 'white' : 'transparent';
+        }
+
+        function completeLog(energy) {
+            const h = habits.find(x => x.id === activeId);
+            const today = new Date().toDateString();
+            if (h.lastCompleted !== today) h.streak += 1;
+            h.lastCompleted = today;
+            h.lastEffort = selectedEffort;
+            localStorage.setItem('habits-store', JSON.stringify(habits));
+            document.getElementById('log-drawer').classList.remove('open');
+            render();
+        }
+
+        function saveNewHabit() {
+            const name = document.getElementById('in-name').value;
+            if (!name) return;
+            habits.push({
+                id: Date.now(),
+                name,
+                goal: document.getElementById('in-goal').value || "Focus",
+                window: [parseInt(document.getElementById('in-start').value) || 0, parseInt(document.getElementById('in-end').value) || 23],
+                streak: 0,
+                lastCompleted: null,
+                lastEffort: null
+            });
+            localStorage.setItem('habits-store', JSON.stringify(habits));
+            closeAddModal();
+            render();
+        }
+
+        function toggleSilent() { document.getElementById('app-root').classList.toggle('silent-mode'); }
+        function openAddModal() { document.getElementById('add-modal').classList.remove('hidden'); }
+        function closeAddModal() { document.getElementById('add-modal').classList.add('hidden'); }
+
+        init();
+    </script>
+</body>
+</html>
