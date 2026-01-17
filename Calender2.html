@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Life Tracker iOS 26 - Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.cdnfonts.com/css/sf-pro-display');
+        
+        :root {
+            --bg-color: #000000;
+            --card-bg: #1c1c1e;
+            --text-color: #ffffff;
+            --dot-color: #333333;
+            --active-dot: #ffffff;
+            --habit-color: #34c759;
+            --accent-blue: #0a84ff;
+        }
+
+        @media (prefers-color-scheme: light) {
+            :root {
+                --bg-color: #f2f2f7;
+                --card-bg: #ffffff;
+                --text-color: #000000;
+                --dot-color: #d1d1d6;
+                --active-dot: #000000;
+            }
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'SF Pro Display', -apple-system, sans-serif;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .ios-clock {
+            font-size: 5rem;
+            font-weight: 600;
+            letter-spacing: -2px;
+            background: linear-gradient(180deg, var(--text-color) 30%, transparent 150%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Grid System */
+        .calendar-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            max-width: 450px;
+            margin-top: 20px;
+        }
+
+        .month-section { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .month-label { font-size: 0.6rem; font-weight: 700; opacity: 0.5; text-transform: uppercase; }
+        .dot-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: var(--dot-color);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .dot.today { background-color: #ff9f0a; box-shadow: 0 0 10px #ff9f0a; }
+        .dot.has-data { border: 2px solid var(--accent-blue); }
+        .dot.completed { background-color: var(--active-dot); }
+
+        /* Modal / Sheet Styling */
+        #todo-modal {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            top: 10%;
+            background: var(--card-bg);
+            backdrop-filter: blur(30px);
+            border-radius: 30px 30px 0 0;
+            padding: 25px;
+            z-index: 100;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+            overflow-y: auto;
+        }
+
+        /* Segmented Control */
+        .tab-bar {
+            background: rgba(120, 120, 128, 0.2);
+            border-radius: 10px;
+            padding: 2px;
+            display: flex;
+            margin-bottom: 25px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+
+        .tab-btn.active {
+            background: #636366;
+            color: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .input-group {
+            background: rgba(120, 120, 128, 0.15);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .expense-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="text-center w-full mb-8">
+        <p id="ios-date" class="font-semibold opacity-80 text-lg uppercase tracking-widest"></p>
+        <h1 id="ios-time" class="ios-clock">00:00</h1>
+        <div class="mt-2 text-sm font-medium opacity-60">
+            YEAR PROGRESS: <span id="year-percent" class="text-orange-500">0%</span>
+        </div>
+    </div>
+
+    <div class="calendar-container" id="master-grid"></div>
+
+    <div id="todo-modal">
+        <div class="flex justify-between items-center mb-6">
+            <h2 id="modal-date-title" class="text-2xl font-bold">Jan 16, 2026</h2>
+            <button onclick="closeModal()" class="bg-white/10 px-4 py-2 rounded-full text-sm font-bold">Close</button>
+        </div>
+
+        <div class="tab-bar">
+            <button class="tab-btn active" onclick="switchTab('tasks')">Tasks</button>
+            <button class="tab-btn" onclick="switchTab('finance')">Finance</button>
+        </div>
+        
+        <div id="section-tasks">
+            <div class="input-group">
+                <label class="text-xs opacity-50 uppercase font-bold mb-2 block">Daily Objective</label>
+                <textarea id="todo-input" class="w-full bg-transparent text-lg focus:outline-none" rows="2" placeholder="Tap to add task..."></textarea>
+            </div>
+            
+            <div class="input-group flex items-center justify-between">
+                <span class="font-medium">Daily Habit Completed</span>
+                <input type="checkbox" id="habit-check" class="w-6 h-6 accent-green-500">
+            </div>
+        </div>
+
+        <div id="section-finance" class="hidden">
+            <div class="input-group">
+                <label class="text-xs opacity-50 uppercase font-bold mb-2 block">Add Expense</label>
+                <div class="flex gap-2 mb-3">
+                    <select id="currency-select" class="bg-white/10 rounded-lg p-2 outline-none">
+                        <option value="$">$ USD</option>
+                        <option value="₹">₹ INR</option>
+                    </select>
+                    <input type="number" id="exp-amount" class="flex-1 bg-white/10 rounded-lg p-2 outline-none" placeholder="Amount">
+                </div>
+                <input type="text" id="exp-note" class="w-full bg-white/10 rounded-lg p-2 outline-none" placeholder="What was it for?">
+                <button onclick="addExpenseItem()" class="w-full mt-3 bg-blue-600 py-2 rounded-lg font-bold text-sm">Add to Log</button>
+            </div>
+
+            <div id="expense-list" class="mt-4">
+                </div>
+        </div>
+
+        <button onclick="saveData()" class="w-full mt-8 bg-white text-black py-4 rounded-2xl font-bold shadow-lg active:scale-95 transition-transform">Save Day</button>
+    </div>
+
+    <script>
+        let selectedDateKey = "";
+        let currentExpenses = [];
+        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+        function init() {
+            updateClock();
+            renderGrid();
+            setInterval(updateClock, 1000);
+            
+            const now = new Date();
+            const options = { weekday: 'long', month: 'short', day: 'numeric' };
+            document.getElementById('ios-date').textContent = now.toLocaleDateString('en-US', options);
+        }
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('ios-time').textContent = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+            
+            const start = new Date(now.getFullYear(), 0, 0);
+            const diff = now - start;
+            const oneDay = 1000 * 60 * 60 * 24;
+            const dayOfYear = Math.floor(diff / oneDay);
+            const percent = ((dayOfYear / 365) * 100).toFixed(1);
+            document.getElementById('year-percent').textContent = percent + "%";
+        }
+
+        function renderGrid() {
+            const container = document.getElementById('master-grid');
+            container.innerHTML = '';
+            const today = new Date();
+            const currentMonth = today.getMonth();
+            const currentDate = today.getDate();
+
+            months.forEach((month, index) => {
+                const section = document.createElement('div');
+                section.className = 'month-section';
+                const label = document.createElement('div');
+                label.className = 'month-label'; label.textContent = month;
+                section.appendChild(label);
+
+                const grid = document.createElement('div');
+                grid.className = 'dot-grid';
+
+                for (let d = 1; d <= daysInMonth[index]; d++) {
+                    const dot = document.createElement('div');
+                    const dateKey = `${index}-${d}`;
+                    dot.className = 'dot';
+                    
+                    if (index < currentMonth || (index === currentMonth && d < currentDate)) dot.classList.add('completed');
+                    if (index === currentMonth && d === currentDate) dot.classList.add('today');
+
+                    const saved = JSON.parse(localStorage.getItem(dateKey) || "{}");
+                    if (saved.todo || (saved.expenses && saved.expenses.length > 0)) dot.classList.add('has-data');
+
+                    dot.onclick = () => openModal(month, d, dateKey);
+                    grid.appendChild(dot);
+                }
+                section.appendChild(grid);
+                container.appendChild(section);
+            });
+        }
+
+        function switchTab(tab) {
+            const btns = document.querySelectorAll('.tab-btn');
+            btns.forEach(b => b.classList.remove('active'));
+            document.getElementById('section-tasks').classList.add('hidden');
+            document.getElementById('section-finance').classList.add('hidden');
+
+            if(tab === 'tasks') {
+                btns[0].classList.add('active');
+                document.getElementById('section-tasks').classList.remove('hidden');
+            } else {
+                btns[1].classList.add('active');
+                document.getElementById('section-finance').classList.remove('hidden');
+            }
+        }
+
+        function openModal(month, day, key) {
+            selectedDateKey = key;
+            document.getElementById('modal-date-title').textContent = `${month} ${day}, 2026`;
+            const saved = JSON.parse(localStorage.getItem(key) || "{}");
+            
+            document.getElementById('todo-input').value = saved.todo || "";
+            document.getElementById('habit-check').checked = saved.habit || false;
+            currentExpenses = saved.expenses || [];
+            
+            renderExpenses();
+            document.getElementById('todo-modal').style.display = 'block';
+        }
+
+        function addExpenseItem() {
+            const amt = document.getElementById('exp-amount').value;
+            const note = document.getElementById('exp-note').value;
+            const curr = document.getElementById('currency-select').value;
+
+            if(!amt || !note) return;
+
+            currentExpenses.push({ amt, note, curr });
+            document.getElementById('exp-amount').value = '';
+            document.getElementById('exp-note').value = '';
+            renderExpenses();
+        }
+
+        function renderExpenses() {
+            const list = document.getElementById('expense-list');
+            list.innerHTML = '<label class="text-xs opacity-50 uppercase font-bold mb-2 block">Logged Today</label>';
+            currentExpenses.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'expense-item';
+                div.innerHTML = `<span>${item.note}</span><span class="font-bold text-orange-400">${item.curr}${item.amt}</span>`;
+                list.appendChild(div);
+            });
+        }
+
+        function closeModal() {
+            document.getElementById('todo-modal').style.display = 'none';
+        }
+
+        function saveData() {
+            const data = {
+                todo: document.getElementById('todo-input').value,
+                habit: document.getElementById('habit-check').checked,
+                expenses: currentExpenses
+            };
+            localStorage.setItem(selectedDateKey, JSON.stringify(data));
+            renderGrid();
+            closeModal();
+        }
+
+        init();
+    </script>
+</body>
+</html>
