@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZENITH | FOCUS.26</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="shortcut icon" href="logo.png" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #000000;
+            --card-bg: #0a0a0a;
+            --border: #1a1a1a;
+            --text-main: #ffffff;
+            --text-dim: #707070;
+            --accent: #ffffff;
+            --danger: #ff3b30;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+        }
+
+        .dashboard {
+            max-width: 1100px;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 2rem;
+        }
+
+        @media (max-width: 900px) {
+            .dashboard { grid-template-columns: 1fr; }
+        }
+
+        /* Branding */
+        .brand-label {
+            font-size: 0.7rem;
+            letter-spacing: 4px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: -5px;
+            display: block;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .glass-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: border 0.3s ease;
+        }
+
+        .glass-card:hover { border-color: #333; }
+
+        h1 { font-weight: 800; font-size: 1.8rem; letter-spacing: -1px; margin-bottom: 0.5rem; }
+        .quote { font-size: 0.85rem; color: var(--text-dim); font-style: italic; }
+
+        /* Input Styles */
+        .input-stack { display: flex; flex-direction: column; gap: 0.8rem; margin-top: 1rem; }
+        .input-label { font-size: 0.65rem; color: var(--text-dim); text-transform: uppercase; font-weight: 700; margin-bottom: -8px; }
+        
+        input, select {
+            background: #111;
+            border: 1px solid var(--border);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            outline: none;
+            font-size: 0.9rem;
+        }
+
+        button.primary-btn {
+            background: white;
+            color: black;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 5px;
+            transition: opacity 0.2s;
+        }
+        button.primary-btn:hover { opacity: 0.9; }
+
+        /* Exam Grid */
+        .exam-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1rem;
+        }
+
+        .exam-card {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 200px;
+        }
+
+        .exam-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .tag {
+            font-size: 0.65rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            padding: 4px 8px;
+            background: white;
+            color: black;
+            border-radius: 4px;
+        }
+
+        .exam-name { font-weight: 600; font-size: 1.2rem; margin-top: 0.5rem; }
+        .exam-date-label { font-size: 0.75rem; color: var(--text-dim); font-weight: 400; }
+
+        .timer-big {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin: 0.8rem 0;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -1px;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            height: 4px;
+            background: #222;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+        .progress-bar { height: 100%; background: white; transition: width 1s ease; }
+
+        .delete-icon {
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .delete-icon:hover { color: var(--danger); }
+
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 4rem;
+            color: var(--text-dim);
+            border: 1px dashed var(--border);
+            border-radius: 16px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard">
+        <main>
+            <div style="margin-bottom: 2.5rem;">
+                <span class="brand-label">ZENITH // PROTOCOL</span>
+                <h1 id="brand-title">FOCUS.26</h1>
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 1rem;">
+                    <span style="font-weight: 600; font-size: 0.9rem;">Active Targets</span>
+                    <div id="clock" style="font-weight: 300; color: var(--text-dim);">00:00:00</div>
+                </div>
+            </div>
+
+            <div class="exam-grid" id="examGrid"></div>
+        </main>
+
+        <aside class="sidebar">
+            <div class="glass-card">
+                <i data-lucide="zap" style="width: 18px; margin-bottom: 0.5rem;"></i>
+                <div class="quote" id="quoteBox">"Victory loves preparation."</div>
+            </div>
+
+            <div class="glass-card">
+                <h3 style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Deploy Timer</h3>
+                <div class="input-stack">
+                    <span class="input-label">Target Name</span>
+                    <input type="text" id="examName" placeholder="e.g. JEE ADVANCED">
+                    
+                    <span class="input-label">Category</span>
+                    <select id="examCategory">
+                        <option value="JEE">JEE</option>
+                        <option value="NEET">NEET</option>
+                        <option value="NDA">NDA</option>
+                        <option value="BOARDS">BOARDS</option>
+                        <option value="OTHER">OTHER</option>
+                    </select>
+
+                    <span class="input-label">Preparation Start</span>
+                    <input type="date" id="startDate">
+
+                    <span class="input-label">Exam Date</span>
+                    <input type="date" id="examDate">
+
+                    <button class="primary-btn" onclick="addExam()">INITIALIZE</button>
+                </div>
+            </div>
+
+            <div class="glass-card" style="opacity: 0.4; text-align: center;">
+                <span style="font-size: 0.7rem; letter-spacing: 1px;">ENCRYPTED LOCAL STORAGE ACTIVE</span>
+            </div>
+        </aside>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        const quotes = [
+            "Precision beats power, timing beats speed.",
+            "Under pressure, you sink to the level of your training.",
+            "The more you sweat in peace, the less you bleed in war.",
+            "Focus on the process, the result is a byproduct.",
+            "Discipline is choosing between what you want now and most."
+        ];
+
+        let exams = JSON.parse(localStorage.getItem('zenith_focus_26')) || [];
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toLocaleTimeString([], {hour12: false});
+        }
+
+        function addExam() {
+            const name = document.getElementById('examName').value;
+            const cat = document.getElementById('examCategory').value;
+            const start = document.getElementById('startDate').value;
+            const end = document.getElementById('examDate').value;
+
+            if (!name || !start || !end) {
+                alert("Please fill all deployment parameters.");
+                return;
+            }
+
+            exams.push({
+                id: Date.now(),
+                name: name.toUpperCase(),
+                category: cat,
+                startDate: new Date(start).getTime(),
+                endDate: new Date(end).getTime()
+            });
+
+            localStorage.setItem('zenith_focus_26', JSON.stringify(exams));
+            render();
+            
+            // Reset inputs
+            document.getElementById('examName').value = '';
+            document.getElementById('startDate').value = '';
+            document.getElementById('examDate').value = '';
+        }
+
+        function deleteExam(id) {
+            exams = exams.filter(e => e.id !== id);
+            localStorage.setItem('zenith_focus_26', JSON.stringify(exams));
+            render();
+        }
+
+        function render() {
+            const grid = document.getElementById('examGrid');
+            if (exams.length === 0) {
+                grid.innerHTML = `<div class="empty-state">
+                    <p>No targets deployed. System idling...</p>
+                </div>`;
+                return;
+            }
+
+            grid.innerHTML = exams.map(exam => {
+                const now = Date.now();
+                const total = exam.endDate - exam.startDate;
+                const elapsed = now - exam.startDate;
+                let percent = Math.min(Math.max((elapsed / total) * 100, 0), 100).toFixed(1);
+
+                return `
+                <div class="glass-card exam-card">
+                    <div class="exam-header">
+                        <div>
+                            <span class="tag">${exam.category}</span>
+                            <div class="exam-name">${exam.name}</div>
+                            <div class="exam-date-label">Ends: ${new Date(exam.endDate).toLocaleDateString()}</div>
+                        </div>
+                        <i data-lucide="x" class="delete-icon" onclick="deleteExam(${exam.id})" style="width: 18px;"></i>
+                    </div>
+                    
+                    <div class="timer-big" id="timer-${exam.id}">Calculating...</div>
+                    
+                    <div style="font-size: 0.65rem; color: var(--text-dim); display:flex; justify-content: space-between; font-weight: 700;">
+                        <span>JOURNEY COMPLETION</span>
+                        <span>${percent}%</span>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-bar" style="width: ${percent}%"></div>
+                    </div>
+                </div>
+                `;
+            }).join('');
+            lucide.createIcons();
+            updateTimers();
+        }
+
+        function updateTimers() {
+            exams.forEach(exam => {
+                const el = document.getElementById(`timer-${exam.id}`);
+                if (!el) return;
+
+                const diff = exam.endDate - Date.now();
+                if (diff <= 0) {
+                    el.innerText = "MISSION COMPLETE";
+                    el.style.fontSize = "1.5rem";
+                    return;
+                }
+
+                const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+                el.innerText = `${d}d ${h}h ${m}m`;
+            });
+        }
+
+        // Initialize
+        document.getElementById('quoteBox').innerText = `"${quotes[Math.floor(Math.random() * quotes.length)]}"`;
+        setInterval(updateClock, 1000);
+        setInterval(updateTimers, 30000); // Update every 30s
+        render();
+
+    </script>
+</body>
+</html>
