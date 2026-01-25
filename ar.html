@@ -2,24 +2,28 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <title>AR Sketch Pro</title>
 
 <link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
 :root{
---glass:rgba(15,15,15,.7);
---border:rgba(255,255,255,.15);
---accent:#61ffd0;
+--glass:rgba(24,24,28,.72);
+--border:rgba(255,255,255,.14);
+--accent:#59ffd3;
+--shadow:0 20px 50px rgba(0,0,0,.6);
 }
 
 *{margin:0;padding:0;box-sizing:border-box;}
 
-body{
+html,body{
+height:100%;
 background:black;
-font-family:system-ui;
+font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Inter,system-ui;
 overflow:hidden;
+color:white;
 }
 
 /* CAMERA */
@@ -31,109 +35,169 @@ height:100%;
 object-fit:cover;
 }
 
-/* SPLASH */
+/* ================= SPLASH ================= */
 #splash{
 position:fixed;
 inset:0;
-background:#000;
+background:radial-gradient(circle at top,#111,#000);
 display:flex;
 align-items:center;
 justify-content:center;
 z-index:99;
+animation:fadeSplash .8s ease forwards;
+animation-delay:2.2s;
 }
-#splash h1{color:white;font-size:3rem}
 
-/* OVERLAY */
+@keyframes fadeSplash{
+to{opacity:0;pointer-events:none}
+}
+
+#splashBox{
+text-align:center;
+}
+
+#splashBox h1{
+font-size:3.2rem;
+letter-spacing:-.02em;
+font-weight:700;
+}
+
+#splashBox p{
+opacity:.6;
+margin-top:6px;
+}
+
+/* ================= OVERLAY ================= */
 .layer{
 position:absolute;
 top:50%;
 left:50%;
 touch-action:none;
 pointer-events:auto;
-opacity:.7;
+opacity:.75;
+filter:drop-shadow(0 8px 30px rgba(0,0,0,.6));
 }
 
-/* UI */
+/* ================= UI ================= */
+
 .toolbar,.bottom{
 position:fixed;
 left:50%;
 transform:translateX(-50%);
-background:var(--glass);
-border:1px solid var(--border);
-backdrop-filter:blur(12px);
-padding:12px;
-border-radius:18px;
 display:flex;
 gap:10px;
+padding:14px 18px;
+background:var(--glass);
+border:1px solid var(--border);
+border-radius:22px;
+backdrop-filter:blur(18px);
+-webkit-backdrop-filter:blur(18px);
+box-shadow:var(--shadow);
 z-index:10;
 }
 
-.toolbar{top:12px;}
-.bottom{bottom:14px;flex-wrap:wrap;width:min(96%,520px);}
+/* Safe-area for iPhones */
+.toolbar{top:calc(env(safe-area-inset-top) + 14px);}
+.bottom{
+bottom:calc(env(safe-area-inset-bottom) + 14px);
+flex-wrap:wrap;
+width:min(94%,560px);
+justify-content:center;
+}
 
-button,input{
-background:transparent;
+/* Buttons */
+
+button,input[type=file]{
+background:rgba(255,255,255,.04);
 color:white;
 border:1px solid var(--border);
-padding:8px 14px;
-border-radius:12px;
+padding:10px 18px;
+border-radius:16px;
+font-weight:500;
+letter-spacing:.2px;
 cursor:pointer;
+transition:.2s ease;
 }
 
-button:hover{border-color:var(--accent);color:var(--accent);}
-
-.corner{
-width:14px;height:14px;
-background:#61ffd0;
-position:absolute;
-border-radius:50%;
+button:hover{
+border-color:var(--accent);
+color:var(--accent);
+box-shadow:0 0 14px rgba(90,255,210,.35);
 }
 
-.hidden{display:none}
+button:active{
+transform:scale(.96);
+}
+
+input[type=file]{
+max-width:150px;
+}
+
+/* Mobile */
+@media(max-width:640px){
+.toolbar,.bottom{width:95%;}
+}
+
+/* ================= GUIDES ================= */
+#guide{
+position:fixed;
+inset:0;
+border:2px dashed rgba(255,255,255,.12);
+pointer-events:none;
+z-index:4;
+}
 </style>
 </head>
 
 <body>
 
-<div id="splash"><h1>AR Sketch Pro v2</h1></div>
+<!-- SPLASH -->
+<div id="splash">
+  <div id="splashBox">
+    <h1>AR Sketch Pro</h1>
+    <p>by Silent Programmer</p>
+    <p>v2.1</p>
+  </div>
+</div>
 
 <video id="camera" autoplay playsinline></video>
 
 <div id="layers"></div>
 
+<!-- TOP -->
 <div class="toolbar">
-<input type="file" id="upload" accept="image/*">
-<button id="addLayer">+ Layer</button>
-<button id="torch">Torch</button>
-<button id="calibrate">Calibrate</button>
+  <input type="file" id="upload" accept="image/*">
+  <button id="addLayer">＋ Layer</button>
+  <button id="torch">🔦 Torch</button>
+  <button id="calibrate">📐 Calibrate</button>
 </div>
 
+<!-- BOTTOM -->
 <div class="bottom">
-<button id="warp">Warp</button>
-<button id="guides">Guides</button>
-<button id="lock">Lock</button>
-<button id="reset">Reset</button>
+  <button id="warp">🪄 Warp</button>
+  <button id="guides">📏 Guides</button>
+  <button id="lock">🔒 Lock</button>
+  <button id="reset">↺ Reset</button>
 </div>
 
 <script>
-setTimeout(()=>splash.remove(),2000);
+setTimeout(()=>splash.remove(),2600);
 
 /* CAMERA */
 const video=document.getElementById("camera");
 let stream;
 
 navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}})
-.then(s=>{
-stream=s;
-video.srcObject=s;
-});
+.then(s=>{stream=s;video.srcObject=s});
 
 /* TORCH */
-document.getElementById("torch").onclick=async()=>{
-const track=stream.getVideoTracks()[0];
-if(!track.getCapabilities().torch)return alert("Torch not supported");
-const torchOn=track.getSettings().torch;
-await track.applyConstraints({advanced:[{torch:!torchOn}]});
+torch.onclick=async()=>{
+const track=stream?.getVideoTracks()[0];
+if(!track || !track.getCapabilities().torch)
+return alert("Torch not supported");
+
+const on=track.getSettings().torch;
+await track.applyConstraints({advanced:[{torch:!on}]});
 };
 
 /* LAYERS */
@@ -211,10 +275,11 @@ if(pointers.size<2)startDist=0;
 };
 
 lock.onclick=()=>locked=!locked;
-reset.onclick=()=>{
-x=innerWidth/2;y=innerHeight/2;scale=1;rot=0;update();
-};
 
+reset.onclick=()=>{
+x=innerWidth/2;y=innerHeight/2;
+scale=1;rot=0;update();
+};
 }
 
 /* GUIDES */
@@ -224,17 +289,8 @@ guideOn=!guideOn;
 if(guideOn){
 const g=document.createElement("div");
 g.id="guide";
-g.style.position="fixed";
-g.style.inset=0;
-g.style.border="2px dashed rgba(255,255,255,.15)";
 document.body.appendChild(g);
 }else document.getElementById("guide")?.remove();
-};
-
-/* WARP MODE (corner handles) */
-warp.onclick=()=>{
-if(!activeLayer)return;
-alert("Perspective warp UI coming next build 👀");
 };
 
 /* SERVICE WORKER */
