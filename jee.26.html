@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JEE Main 2026 | Session 1 Elite Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Manrope:wght@600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg: #030712;
+            --card: rgba(17, 24, 39, 0.7);
+            --accent: #6366f1;
+            --accent-light: #a5b4fc;
+            --text-main: #f9fafb;
+            --text-dim: #9ca3af;
+            --border: rgba(255, 255, 255, 0.08);
+            --glow: rgba(99, 102, 241, 0.15);
+            --transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        [data-theme="light"] {
+            --bg: #f8fafc;
+            --card: rgba(255, 255, 255, 0.8);
+            --accent: #4f46e5;
+            --accent-light: #818cf8;
+            --text-main: #0f172a;
+            --text-dim: #64748b;
+            --border: rgba(0, 0, 0, 0.05);
+            --glow: rgba(79, 70, 229, 0.05);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            transition: background-color 0.5s ease;
+            min-height: 100vh;
+        }
+
+        /* Noise Overlay */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: url('https://grainy-gradients.vercel.app/noise.svg');
+            opacity: 0.03;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
+
+        nav {
+            position: sticky; top: 0; z-index: 100;
+            padding: 1.5rem 0;
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-content { display: flex; justify-content: space-between; align-items: center; }
+
+        .logo {
+            font-family: 'Manrope', sans-serif;
+            font-weight: 800; font-size: 1.4rem;
+            display: flex; align-items: center; gap: 10px;
+        }
+
+        /* Hero Section */
+        .hero { padding: 6rem 0 3rem; text-align: center; }
+        .hero h1 {
+            font-family: 'Manrope', sans-serif;
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            line-height: 1.1; margin-bottom: 1.5rem;
+            background: linear-gradient(to bottom, var(--text-main), var(--text-dim));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .hero p { color: var(--text-dim); font-size: 1.1rem; max-width: 600px; margin: 0 auto 2rem; }
+
+        /* Controls & Filters */
+        .controls {
+            display: flex; flex-direction: column; gap: 1.5rem;
+            margin-bottom: 4rem; align-items: center;
+        }
+
+        .search-wrapper { position: relative; width: 100%; max-width: 500px; }
+        .search-wrapper input {
+            width: 100%; padding: 1.2rem 1.5rem 1.2rem 3.5rem;
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 100px; color: var(--text-main); font-size: 1rem;
+            transition: var(--transition);
+        }
+        .search-wrapper input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 30px var(--glow); }
+        .search-wrapper i { position: absolute; left: 1.5rem; top: 50%; transform: translateY(-50%); color: var(--text-dim); }
+
+        .chips { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+        .chip {
+            padding: 0.6rem 1.2rem; border-radius: 100px;
+            background: var(--card); border: 1px solid var(--border);
+            color: var(--text-dim); cursor: pointer; font-size: 0.85rem;
+            transition: var(--transition);
+            user-select: none;
+        }
+        .chip:hover { border-color: var(--accent-light); color: var(--text-main); }
+        .chip.active { background: var(--accent); color: white; border-color: var(--accent); box-shadow: 0 5px 15px var(--glow); }
+
+        /* Bento Grid */
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 1.5rem;
+            padding-bottom: 6rem;
+        }
+
+        .card {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 24px; padding: 2rem;
+            position: relative; overflow: hidden;
+            transition: var(--transition);
+            display: flex; flex-direction: column;
+            animation: cardEntrance 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+            opacity: 0;
+        }
+
+        @keyframes cardEntrance {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card:hover { transform: translateY(-8px); border-color: var(--accent); box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; }
+        .card-date { font-family: 'Manrope', sans-serif; font-size: 1.5rem; font-weight: 800; }
+        .card-shift { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--accent-light); font-weight: 700; }
+
+        .status-pill { padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); }
+
+        .card-body { flex-grow: 1; margin-bottom: 2rem; }
+        .file-meta { display: flex; align-items: center; gap: 15px; color: var(--text-dim); font-size: 0.9rem; }
+
+        .btn-download {
+            width: 100%; padding: 1rem; border-radius: 14px;
+            border: none; background: var(--text-main); color: var(--bg);
+            font-weight: 700; cursor: pointer; display: flex;
+            align-items: center; justify-content: center; gap: 10px;
+            transition: var(--transition);
+        }
+        .btn-download:hover { background: var(--accent); color: white; }
+
+        /* Empty State */
+        #emptyState {
+            grid-column: 1 / -1; text-align: center; padding: 4rem;
+            display: none; color: var(--text-dim);
+        }
+
+        .theme-btn {
+            background: none; border: 1px solid var(--border);
+            color: var(--text-main); width: 40px; height: 40px;
+            border-radius: 10px; cursor: pointer; transition: var(--transition);
+        }
+
+        @media (max-width: 768px) { .bento-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="container nav-content">
+            <div class="logo">
+                <div style="width: 32px; height: 32px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-bolt" style="color: white; font-size: 14px;"></i>
+                </div>
+                JEE.26
+            </div>
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <button class="theme-btn" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
+                <span style="font-size: 0.7rem; font-weight: 800; color: var(--text-dim); background: var(--border); padding: 4px 8px; border-radius: 4px;">2026 S1</span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <section class="hero">
+            <div style="display: inline-flex; align-items: center; gap: 8px; background: var(--card); padding: 5px 15px; border-radius: 100px; border: 1px solid var(--border); margin-bottom: 2rem;">
+                <span style="width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981;"></span>
+                <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-dim);">SYSTEM ONLINE — 2026 OFFICIAL</span>
+            </div>
+            <h1>The Archive of <br> Session 1 Papers.</h1>
+            <p>Access high-quality PDFs for every shift of the JEE Main 2026 Session 1 examination.</p>
+        </section>
+
+        <section class="controls">
+            <div class="search-wrapper">
+                <i class="fas fa-search"></i>
+                <input type="text" id="mainSearch" placeholder="Search date (e.g. 24 Jan)...">
+            </div>
+            <div class="chips" id="filterChips">
+                <div class="chip active" data-filter="all">All Shifts</div>
+                <div class="chip" data-filter="Shift 1">Shift 1</div>
+                <div class="chip" data-filter="Shift 2">Shift 2</div>
+
+            </div>
+        </section>
+
+        <div class="bento-grid" id="paperGrid">
+            <div id="emptyState">
+                <i class="fas fa-search" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.2;"></i>
+                <p>No papers found matching those criteria.</p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Data with specific properties for filtering
+        const papers = [
+            { date: "21 JAN 2026", shift: "Shift 1", size: "2.8MB", solved: true, url: "https://t.me/cbseiansss/4366/58938" },
+            { date: "21 JAN 2026", shift: "Shift 2", size: "2.8MB",  solved: true, url: "https://t.me/cbseiansss/4366/58939" },,
+            { date: "22 JAN 2026", shift: "Shift 1", size: "2.9MB",  solved: true, url: "https://t.me/cbseiansss/4366/59337" },
+            { date: "22 JAN 2026", shift: "Shift 2", size: "2.6MB",  solved: true, url: "https://t.me/cbseiansss/4366/59338" },
+            { date: "23 JAN 2026", shift: "Shift 1", size: "3.0MB",  solved: true, url: "https://t.me/cbseiansss/4366/59401" },
+            { date: "23 JAN 2026", shift: "Shift 2", size: "2.5MB", solved: true, url: "https://t.me/cbseiansss/4366/59402" },
+            { date: "24 JAN 2026", shift: "Shift 1", size: "2.8MB",  solved: true, url: "https://t.me/cbseiansss/4366/59631" },
+            { date: "24 JAN 2026", shift: "Shift 2", size: "2.7MB",  solved: true, url: "https://t.me/cbseiansss/4366/59632" },
+        ];
+
+        let currentFilter = 'all';
+        let searchQuery = '';
+
+        const grid = document.getElementById('paperGrid');
+        const emptyState = document.getElementById('emptyState');
+        const searchInput = document.getElementById('mainSearch');
+        const chipContainer = document.getElementById('filterChips');
+
+        // Main Rendering Logic
+        function updateUI() {
+            const filtered = papers.filter(p => {
+                const matchesSearch = p.date.toLowerCase().includes(searchQuery) || p.shift.toLowerCase().includes(searchQuery);
+                
+                let matchesChip = true;
+                if (currentFilter === 'Shift 1' || currentFilter === 'Shift 2') {
+                    matchesChip = p.shift === currentFilter;
+                } else if (currentFilter === 'solved') {
+                    matchesChip = p.solved === true;
+                } else if (currentFilter === 'Official') {
+                    matchesChip = p.status === 'Official';
+                }
+
+                return matchesSearch && matchesChip;
+            });
+
+            // Handle Empty State
+            const existingCards = grid.querySelectorAll('.card');
+            existingCards.forEach(c => c.remove());
+
+            if (filtered.length === 0) {
+                emptyState.style.display = 'block';
+            } else {
+                emptyState.style.display = 'none';
+                filtered.forEach((p, i) => {
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.style.animationDelay = `${i * 0.05}s`;
+                    card.innerHTML = `
+                        <div class="card-header">
+                            <div>
+                                <p class="card-shift">${p.shift}</p>
+                                <h2 class="card-date">${p.date}</h2>
+                            </div>
+                            <span class="status-pill">${p.status}</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="file-meta">
+                                <span><i class="far fa-file-pdf"></i> ${p.size}</span>
+                                <span><i class="fas fa-check-circle"></i> ${p.solved ? 'SOLVED' : 'Q-PAPER ONLY'}</span>
+                            </div>
+                        </div>
+                        <button class="btn-download" onclick="downloadPDF(this, '${p.url}', '${p.date}', '${p.shift}')">
+                            <i class="fas fa-arrow-down"></i> Download PDF
+                        </button>
+                    `;
+                    grid.appendChild(card);
+                });
+            }
+        }
+
+        // Filter Chip Event Listener
+        chipContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('chip')) {
+                // Remove active from others
+                document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+                // Add active to clicked
+                e.target.classList.add('active');
+                
+                currentFilter = e.target.getAttribute('data-filter');
+                updateUI();
+            }
+        });
+
+        // Search Input Event Listener
+        searchInput.addEventListener('input', (e) => {
+            searchQuery = e.target.value.toLowerCase();
+            updateUI();
+        });
+
+        // Theme Toggle
+        function toggleTheme() {
+            const body = document.body;
+            const icon = document.querySelector('.theme-btn i');
+            if(body.getAttribute('data-theme') === 'light') {
+                body.removeAttribute('data-theme');
+                icon.className = 'fas fa-moon';
+            } else {
+                body.setAttribute('data-theme', 'light');
+                icon.className = 'fas fa-sun';
+            }
+        }
+
+        // Download PDF Function
+        function downloadPDF(btn, url, date, shift) {
+            const original = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> DOWNLOADING...';
+            btn.style.pointerEvents = 'none';
+            
+            // Create filename from date and shift
+            const filename = `JEE-Main-${date.replace(/\s/g, '-')}-${shift.replace(/\s/g, '-')}.pdf`;
+            
+            // Create temporary link and trigger download
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            link.target = '_blank';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Show success state
+            setTimeout(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> DOWNLOADED';
+                btn.style.background = '#10b981';
+                btn.style.color = 'white';
+                setTimeout(() => {
+                    btn.innerHTML = original;
+                    btn.style.background = '';
+                    btn.style.color = '';
+                    btn.style.pointerEvents = 'all';
+                }, 2000);
+            }, 600);
+        }
+
+        // Initial Render
+        updateUI();
+    </script>
+</body>
+</html>
