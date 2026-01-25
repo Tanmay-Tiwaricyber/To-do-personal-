@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no"/>
-    <title>Studio AR | Pro Sketch</title>
+    <title>Studio AR | Spatial Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         :root {
             --bg: #000000;
-            --glass: rgba(10, 10, 10, 0.8);
+            --glass: rgba(10, 10, 10, 0.85);
             --border: rgba(255, 255, 255, 0.15);
             --accent: #ffffff;
-            --active-glow: #59ffd3;
-            --text-main: #ffffff;
-            --text-dim: #888888;
+            --active: #59ffd3;
+            --text: #ffffff;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -23,110 +23,14 @@
             background: var(--bg);
             font-family: 'Inter', sans-serif;
             overflow: hidden;
-            color: var(--text-main);
-            position: fixed;
-            width: 100%;
-            perspective: 1000px; /* Enables 3D VR effect */
+            color: var(--text);
         }
 
-        #camera {
-            position: fixed;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            z-index: 1;
-        }
+        /* UI Layers */
+        #ui-layer { position: fixed; inset: 0; z-index: 100; pointer-events: none; }
+        #ui-layer * { pointer-events: auto; }
 
-        #layers {
-            position: fixed;
-            inset: 0;
-            z-index: 2;
-            pointer-events: none;
-            transform-style: preserve-3d;
-        }
-
-        .layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            touch-action: none;
-            pointer-events: auto;
-            mix-blend-mode: screen;
-            filter: grayscale(1) contrast(1.1);
-            will-change: transform;
-            transform-origin: center center;
-        }
-
-        .layer.active { outline: 1px solid var(--accent); }
-
-        /* UI PANELS */
-        .ui-panel {
-            position: fixed;
-            z-index: 10;
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            background: var(--glass);
-            border: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-        }
-
-        .top-bar {
-            top: calc(env(safe-area-inset-top) + 12px);
-            left: 50%;
-            transform: translateX(-50%);
-            width: 92%;
-            max-width: 500px;
-            height: 54px;
-            padding: 0 16px;
-            border-radius: 100px;
-            justify-content: space-between;
-        }
-
-        .dock {
-            bottom: calc(env(safe-area-inset-bottom) + 20px);
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 10px;
-            border-radius: 30px;
-            gap: 12px;
-        }
-
-        .btn {
-            background: rgba(255, 255, 255, 0.05);
-            border: none;
-            color: var(--text-main);
-            width: 50px;
-            height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 22px;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-
-        .btn:active { transform: scale(0.9); }
-        .btn.primary { background: var(--accent); color: var(--bg); }
-        .btn.active { color: var(--active-glow); box-shadow: 0 0 15px rgba(89, 255, 211, 0.2); }
-        .btn svg { width: 22px; height: 22px; stroke-width: 2px; }
-
-        /* VR INITIALIZE BUTTON */
-        #ar-init {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.9);
-            z-index: 200;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 30px;
-        }
-
-        /* SPLASH */
+        /* --- SPLASH --- */
         #splash {
             position: fixed;
             inset: 0;
@@ -135,188 +39,235 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            z-index: 300;
+            z-index: 1000;
             transition: opacity 0.8s ease;
         }
 
-        .logo-box { width: 40px; height: 40px; border: 2px solid #fff; margin-bottom: 20px; animation: rot 4s infinite linear; }
-        @keyframes rot { from {transform: rotate(0deg)} to {transform: rotate(360deg)} }
+        .logo-mark {
+            width: 40px; height: 40px;
+            border: 2px solid #fff;
+            transform: rotate(45deg);
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
 
-        #guide-layer {
-            position: fixed; inset: 0; pointer-events: none; display: none; z-index: 3;
-            background-image: radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px);
-            background-size: 30px 30px;
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+        /* --- CONTROLS --- */
+        .panel {
+            position: absolute;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            background: var(--glass);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+        }
+
+        .top-bar {
+            top: 20px; left: 50%;
+            transform: translateX(-50%);
+            width: 90%; max-width: 400px;
+            height: 60px; padding: 0 20px;
+            border-radius: 100px;
+            justify-content: space-between;
+        }
+
+        .dock {
+            bottom: 30px; left: 50%;
+            transform: translateX(-50%);
+            padding: 10px; border-radius: 30px;
+            gap: 12px;
+        }
+
+        .btn {
+            background: rgba(255,255,255,0.05);
+            border: none; color: #fff;
+            width: 50px; height: 50px;
+            border-radius: 20px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: 0.2s;
+        }
+
+        .btn:active { transform: scale(0.9); }
+        .btn.active { color: var(--active); box-shadow: 0 0 15px rgba(89,255,211,0.2); }
+        .btn.primary { background: #fff; color: #000; width: 60px; height: 60px; border-radius: 25px; }
+
+        svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; }
+
+        /* AR Hint */
+        #hint {
+            position: fixed; bottom: 120px; left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            padding: 8px 16px; border-radius: 20px;
+            font-size: 12px; opacity: 0.8;
+            display: none;
         }
     </style>
 </head>
 <body>
 
 <div id="splash">
-    <div class="logo-box"></div>
+    <div class="logo-mark"></div>
     <h1 style="letter-spacing: 5px; font-weight: 300;">STUDIO AR</h1>
-    <p style="font-size: 10px; color: #555; margin-top: 10px; letter-spacing: 2px;">BY SILENT PROGRAMMER</p>
+    <p style="font-size: 10px; margin-top: 8px; color: #666; letter-spacing: 2px;">BY SILENT PROGRAMMER</p>
 </div>
 
-<div id="ar-init">
-    <h2 style="margin-bottom: 20px; font-weight: 300;">Spatial Tracking Required</h2>
-    <p style="color: var(--text-dim); margin-bottom: 30px; font-size: 14px;">To lock the image in 3D space, we need motion sensor access.</p>
-    <button class="btn primary" style="width: auto; padding: 0 30px;" onclick="startARSession()">ENABLE VR LOCK</button>
+<div id="hint">Point at your paper and tap "Anchor"</div>
+
+<div id="ui-layer">
+    <div class="panel top-bar">
+        <button class="btn" onclick="document.getElementById('file-input').click()">
+            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+        <span style="font-size: 11px; font-weight: 600; color: #666;">SPATIAL ENGINE V3</span>
+        <button class="btn" id="torchToggle">
+            <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        </button>
+    </div>
+
+    <div class="panel dock">
+        <button class="btn" id="lockMode" title="Spatial Lock">
+            <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        </button>
+        <button class="btn primary" id="ar-button">
+            <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+        <button class="btn" id="resetBtn">
+            <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8M3 3v5h5"/></svg>
+        </button>
+    </div>
 </div>
 
-<video id="camera" autoplay playsinline></video>
-<div id="guide-layer"></div>
-<div id="layers"></div>
-
-<div class="ui-panel top-bar">
-    <button class="btn" onclick="document.getElementById('upload').click()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg>
-    </button>
-    <div id="vr-status" style="font-size: 10px; color: var(--text-dim);">VR READY</div>
-    <button class="btn" id="torchBtn">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-    </button>
-</div>
-
-<div class="ui-panel dock">
-    <button class="btn" id="vrLockBtn" title="Spatial Lock">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-    </button>
-    <button class="btn" id="guideBtn">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 3h18v18H3zM9 3v18M15 3v18M3 9h18M3 15h18"/></svg>
-    </button>
-    <button class="btn primary" id="resetBtn">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8M3 3v5h5"/></svg>
-    </button>
-</div>
-
-<input type="file" id="upload" accept="image/*" hidden>
+<input type="file" id="file-input" accept="image/*" hidden>
 
 <script>
-    const layersDiv = document.getElementById("layers");
-    let isSpatialLocked = false;
-    let gyro = { alpha: 0, beta: 0, gamma: 0 };
-    let baseGyro = { alpha: 0, beta: 0, gamma: 0 };
+    let scene, camera, renderer, arSource, imageMesh;
+    let isARActive = false;
+    let selectedImage = null;
 
-    // --- AR / SENSOR ENGINE ---
-    async function startARSession() {
-        if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-            const permission = await DeviceOrientationEvent.requestPermission();
-            if (permission !== 'granted') return alert("Permission denied");
-        }
+    // --- INITIALIZATION ---
+    window.onload = () => {
+        setTimeout(() => {
+            document.getElementById('splash').style.opacity = '0';
+            setTimeout(() => document.getElementById('splash').remove(), 800);
+        }, 2000);
+        initThree();
+    };
+
+    function initThree() {
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
         
-        window.addEventListener('deviceorientation', (e) => {
-            if (!isSpatialLocked) {
-                baseGyro = { alpha: e.alpha, beta: e.beta, gamma: e.gamma };
-            }
-            gyro = { alpha: e.alpha, beta: e.beta, gamma: e.gamma };
-            updateAllLayers();
-        });
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.xr.enabled = true;
+        document.body.appendChild(renderer.domElement);
 
-        document.getElementById('ar-init').style.display = 'none';
-        initCamera();
+        const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
+        scene.add(light);
     }
 
-    async function initCamera() {
-        const stream = await navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: "environment", focusMode: "continuous" } 
-        });
-        document.getElementById('camera').srcObject = stream;
-    }
-
-    // --- INTERACTION LOGIC ---
-    function applyGestures(el) {
-        let state = { x: innerWidth/2, y: innerHeight/2, s: 0.5, r: 0 };
-        let pointers = new Map();
-        let iDist = 0, iScale = 1, iAngle = 0, iRot = 0;
-
-        const update = () => {
-            let dr = 0, dx = 0, dy = 0;
-            
-            if (isSpatialLocked) {
-                // VR Compensation Logic:
-                // Subtract current tilt from the base tilt to keep image stable
-                dr = -(gyro.alpha - baseGyro.alpha);
-                dx = (gyro.gamma - baseGyro.gamma) * 5; // Horizontal sway
-                dy = (gyro.beta - baseGyro.beta) * 5;   // Vertical sway
-            }
-
-            el.style.transform = `
-                translate3d(${state.x + dx}px, ${state.y + dy}px, 0) 
-                translate(-50%, -50%) 
-                scale(${state.s}) 
-                rotate(${state.r + dr}deg)
-            `;
+    // --- IMAGE LOADING ---
+    document.getElementById('file-input').onchange = (e) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const loader = new THREE.TextureLoader();
+            loader.load(event.target.result, (texture) => {
+                createImagePlane(texture);
+            });
         };
-
-        el.addEventListener('pointerdown', e => {
-            el.setPointerCapture(e.pointerId);
-            pointers.set(e.pointerId, e);
-            if (pointers.size === 2) {
-                const pts = [...pointers.values()];
-                iDist = Math.hypot(pts[1].clientX - pts[0].clientX, pts[1].clientY - pts[0].clientY);
-                iAngle = Math.atan2(pts[1].clientY - pts[0].clientY, pts[1].clientX - pts[0].clientX);
-                iScale = state.s; iRot = state.r;
-            }
-        });
-
-        el.addEventListener('pointermove', e => {
-            if (!pointers.has(e.pointerId)) return;
-            pointers.set(e.pointerId, e);
-
-            if (pointers.size === 1) {
-                state.x += e.movementX;
-                state.y += e.movementY;
-            } else if (pointers.size === 2) {
-                const pts = [...pointers.values()];
-                const dist = Math.hypot(pts[1].clientX - pts[0].clientX, pts[1].clientY - pts[0].clientY);
-                const ang = Math.atan2(pts[1].clientY - pts[0].clientY, pts[1].clientX - pts[0].clientX);
-                state.s = iScale * (dist / iDist);
-                state.r = iRot + (ang - iAngle) * (180 / Math.PI);
-            }
-            update();
-        });
-
-        el.addEventListener('pointerup', e => pointers.delete(e.pointerId));
-        
-        // Expose update function to global loop
-        el.refreshAR = update;
-        update();
-    }
-
-    function updateAllLayers() {
-        document.querySelectorAll('.layer').forEach(l => {
-            if (l.refreshAR) l.refreshAR();
-        });
-    }
-
-    // --- UI EVENTS ---
-    document.getElementById('vrLockBtn').onclick = function() {
-        isSpatialLocked = !isSpatialLocked;
-        this.classList.toggle('active');
-        baseGyro = { ...gyro }; // Calibrate "flat" position
-        document.getElementById('vr-status').innerText = isSpatialLocked ? "VR LOCKED" : "VR READY";
+        reader.readAsDataURL(e.target.files[0]);
     };
 
-    document.getElementById('upload').onchange = e => {
-        const file = e.target.files[0];
-        if (file) {
-            const img = document.createElement("img");
-            img.src = URL.createObjectURL(file);
-            img.className = "layer";
-            layersDiv.appendChild(img);
-            applyGestures(img);
+    function createImagePlane(texture) {
+        if (imageMesh) scene.remove(imageMesh);
+        
+        const aspect = texture.image.width / texture.image.height;
+        const geometry = new THREE.PlaneGeometry(0.3 * aspect, 0.3);
+        const material = new THREE.MeshBasicMaterial({ 
+            map: texture, 
+            transparent: true, 
+            opacity: 0.7,
+            side: THREE.DoubleSide
+        });
+        
+        imageMesh = new THREE.Mesh(geometry, material);
+        // Place in front of camera initially
+        imageMesh.position.set(0, 0, -0.5); 
+        scene.add(imageMesh);
+    }
+
+    // --- AR SESSION ---
+    const arButton = document.getElementById('ar-button');
+    arButton.onclick = async () => {
+        if (!isARActive) {
+            const sessionInit = { requiredFeatures: ['hit-test'] };
+            const session = await navigator.xr.requestSession('immersive-ar', sessionInit);
+            renderer.xr.setSession(session);
+            arButton.classList.add('active');
+            document.getElementById('hint').style.display = 'block';
+            isARActive = true;
         }
     };
 
-    document.getElementById('guideBtn').onclick = () => {
-        const gl = document.getElementById('guide-layer');
-        gl.style.display = gl.style.display === 'block' ? 'none' : 'block';
+    // --- GESTURE LOGIC (Spatial) ---
+    let initialTouchDist = 0;
+    let initialScale = 1;
+
+    window.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 2) {
+            initialTouchDist = Math.hypot(
+                e.touches[0].pageX - e.touches[1].pageX,
+                e.touches[0].pageY - e.touches[1].pageY
+            );
+            if(imageMesh) initialScale = imageMesh.scale.x;
+        }
+    });
+
+    window.addEventListener('touchmove', (e) => {
+        if (!imageMesh) return;
+
+        if (e.touches.length === 1) {
+            // One finger drag in 3D Space
+            imageMesh.position.x += e.movementX * 0.001;
+            imageMesh.position.y -= e.movementY * 0.001;
+        } 
+        else if (e.touches.length === 2) {
+            // Two finger zoom
+            const currentDist = Math.hypot(
+                e.touches[0].pageX - e.touches[1].pageX,
+                e.touches[0].pageY - e.touches[1].pageY
+            );
+            const scaleFactor = currentDist / initialTouchDist;
+            imageMesh.scale.set(initialScale * scaleFactor, initialScale * scaleFactor, 1);
+        }
+    });
+
+    // --- RENDER LOOP ---
+    renderer.setAnimationLoop((timestamp, frame) => {
+        if (frame && isARActive) {
+            // If the user wants to "lock" to a surface, 
+            // WebXR handles the spatial persistence automatically.
+        }
+        renderer.render(scene, camera);
+    });
+
+    // --- UTILS ---
+    document.getElementById('resetBtn').onclick = () => {
+        if (imageMesh) {
+            imageMesh.position.set(0, 0, -0.5);
+            imageMesh.rotation.set(0, 0, 0);
+            imageMesh.scale.set(1, 1, 1);
+        }
     };
 
-    document.getElementById('resetBtn').onclick = () => location.reload();
-
-    // Splash Loader
-    window.onload = () => setTimeout(() => document.getElementById('splash').style.opacity = '0', 2000);
+    document.getElementById('lockMode').onclick = () => {
+        document.getElementById('lockMode').classList.toggle('active');
+        // Logic to disable movement
+    };
 </script>
 </body>
 </html>
